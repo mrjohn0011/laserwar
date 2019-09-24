@@ -1,0 +1,3 @@
+LaserWar	KEYWORD1
+waitCommand	KEYWORD2
+send	KEYWORD2

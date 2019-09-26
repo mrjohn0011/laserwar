@@ -15,10 +15,11 @@ class LaserWar {
 		unsigned long waitCommand(byte pin);
 		void send(byte pin, unsigned long cmd);
 	private:
-		char scanBits(const char* bitBuf, byte count);
 		void sendPulse(int cycles, byte pin);
 		void sendByte(byte x, byte pin);
 		void sendHeader(byte pin);
+		int decodePulse(byte pin);
+		bool isCorrect(unsigned long duration, int etalon);
 };
 
 #endif

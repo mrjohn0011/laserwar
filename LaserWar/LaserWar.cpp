@@ -13,30 +13,13 @@
 #define MLT_HEADER_CYCLES 128 // adjusted experimentally
 #define MLT_BIT0_CYCLES 32 // adjusted experimentally
 #define MLT_BIT1_CYCLES 64 // adjusted experimentally
-#define MLT_HEADER_LENGTH   2400
-#define MLT_BIT0_LENGTH   600
-#define MLT_BIT1_LENGTH   1200
-#define MLT_HEADER_MIN_LENGTH (MLT_HEADER_LENGTH-500)
-#define MLT_HEADER_MAX_LENGTH (MLT_HEADER_LENGTH+300)
-#define MLT_BIT0_MIN_LENGTH   (MLT_BIT0_LENGTH-200)
-#define MLT_BIT0_MAX_LENGTH   (MLT_BIT0_LENGTH+200)
-#define MLT_BIT1_MIN_LENGTH   (MLT_BIT1_LENGTH-250)
-#define MLT_BIT1_MAX_LENGTH   (MLT_BIT1_LENGTH+250)
-#define MLT_SHOT_DATA_LENGTH  14
-#define MLT_CMD_DATA_LENGTH   24
-#define MLT_MAX_DATA_LENGTH   24
-#define PULSE_TIMEOUT 2000
+
+#define MISTAKE_MAX 50
+#define ONE_DURATION 1200
+#define ZERO_DURATION 600 
+#define PAUSE_DURATION 600
 
 LaserWar::LaserWar(){}
-
-char LaserWar::scanBits(const char* bitBuf, byte count) {
-  char value = bitBuf[0];
-  for (char i=1; i < count; i++) {
-    value = value << 1;
-    value = value | bitBuf[i];
-  }
-  return value;
-}
 
 void LaserWar::sendHeader(byte pin) {
   sendPulse(MLT_HEADER_CYCLES, pin);
@@ -70,47 +53,43 @@ void LaserWar::send(byte pin, unsigned long cmd){
 	sendByte((cmd & 0x00ffff) >> 8, pin);
 	sendByte(cmd & 0x0000ff, pin);
 }
+
+bool LaserWar::isCorrect(unsigned long duration, int etalon){
+  return duration >= (etalon - MISTAKE_MAX) && duration <= (etalon + MISTAKE_MAX);
+}
+
+int LaserWar::decodePulse(byte pin){
+  unsigned long duration = pulseIn(pin, LOW, 2450);
+  if (isCorrect(duration, ONE_DURATION)){
+    return ONE_DURATION;
+  } else if (isCorrect(duration, ZERO_DURATION)){
+    return ZERO_DURATION;
+  } else {
+    return 0;
+  }
+}	
 	
 unsigned long LaserWar::waitCommand(byte pin){
-	if( digitalRead(pin) == LOW ) {
-    unsigned long headerStartTime = micros();
-    while ( digitalRead(pin) == LOW );
-    unsigned long headerEndTime = micros();
+  byte counter = 0;
+  unsigned long cmd = 0;
 
-    int headerLength = headerEndTime - headerStartTime;
-    if ( headerLength > MLT_HEADER_MIN_LENGTH && headerLength < MLT_HEADER_MAX_LENGTH ) {
-	  char buf[MLT_MAX_DATA_LENGTH];
-      char receivedPulseCount = 0;
+  while(counter <= 24){
+    if(digitalRead(pin) == HIGH){
+      unsigned long d = decodePulse(pin);
+      if (d) {
+        byte b = d == ONE_DURATION ? 0x01 : 0x00;
+        cmd = (cmd << 1) | b;
+        counter++;
 
-      while (receivedPulseCount < MLT_MAX_DATA_LENGTH) {
-        int pulseLength = 0;
-        if( digitalRead(pin) == HIGH ) {
-          pulseLength = pulseIn(pin, LOW, PULSE_TIMEOUT);
-        }
-
-        if(pulseLength > MLT_BIT0_MIN_LENGTH && pulseLength < MLT_BIT0_MAX_LENGTH ) {
-          buf[receivedPulseCount] = 0;
-          receivedPulseCount++;
-        } else if(pulseLength > MLT_BIT1_MIN_LENGTH && pulseLength < MLT_BIT1_MAX_LENGTH ) {
-          buf[receivedPulseCount] = 1;
-          receivedPulseCount++;
-        } else if (pulseLength > MLT_HEADER_MIN_LENGTH && pulseLength < MLT_HEADER_MAX_LENGTH) {
-          receivedPulseCount = 0;
-          continue;
-        } else {
-          break;
+        if (counter == 24){
+          return cmd;
         }
       }
-
-      if ( receivedPulseCount==MLT_CMD_DATA_LENGTH && buf[0]==1 ) {
-        byte byte0 = (byte)scanBits(buf, 8);
-        byte byte1 = (byte)scanBits(buf+8, 8);
-        byte byte2 = (byte)scanBits(buf+16, 8);
-		
-		return ((((unsigned long)byte0 << 8) | byte1) << 8) | byte2;
+    } else {
+      if (!pulseIn(pin, HIGH, PAUSE_DURATION + MISTAKE_MAX)){
+        counter = 0;
+        cmd = 0;
       }
     }
   }
-
-  return 0;
 }

@@ -7,8 +7,8 @@
 #define IR_PIN 3
 #define BANGS_COUNT 3
 #define BEFORE_BANG_DELAY 4
-#define RESPAWN_CMD 0x8302e8
-#define BANG_CMD 0x8300e8
+#define RESPAWN_CMD 0x8305e8
+#define BANG_CMD 0x830be8
 
 unsigned char used = '0';
 LaserWar lw;

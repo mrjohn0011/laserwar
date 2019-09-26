@@ -14,7 +14,7 @@
 #define MLT_BIT0_CYCLES 32 // adjusted experimentally
 #define MLT_BIT1_CYCLES 64 // adjusted experimentally
 
-#define MISTAKE_MAX 50
+#define MISTAKE_MAX 100
 #define ONE_DURATION 1200
 #define ZERO_DURATION 600 
 #define PAUSE_DURATION 600

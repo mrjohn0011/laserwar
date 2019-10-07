@@ -36,7 +36,7 @@ void loop() {
 void restore(){
   tone(TONE_PIN, 1000);
   delay(700);
-  noTone();
+  noTone(TONE_PIN);
 
   used = '0';
   EEPROM.write(0, used);
@@ -46,7 +46,7 @@ void bang(){
   for (byte i = 0; i < BEFORE_BANG_DELAY; i++){
     tone(TONE_PIN, 1000);
     delay(500);
-    noTone();
+    noTone(TONE_PIN);
     delay(500);
   }
 
@@ -57,4 +57,8 @@ void bang(){
 
   used = '1';
   EEPROM.write(0, used);
+
+  tone(TONE_PIN, 1000);
+  delay(2000);
+  noTone(TONE_PIN);
 }

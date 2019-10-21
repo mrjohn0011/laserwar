@@ -8,7 +8,8 @@
 #include "Arduino.h"
 #include "LaserWar.h"
 
-#define CARRIER_INTERVAL 4 // adjusted experimentally
+#define CARRIER_INTERVAL 4 // for DigiSpark
+//#define CARRIER_INTERVAL 6 // for Arduino Pro Mini / Nano
 #define MLT_SPACE_INTERVAL 600
 #define MLT_HEADER_CYCLES 128 // adjusted experimentally
 #define MLT_BIT0_CYCLES 32 // adjusted experimentally

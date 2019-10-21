@@ -12,7 +12,7 @@
 #define MIN_DAMAGE 5
 #define MAX_DAMAGE 100
 
-#define MIN_INTERVAL 5
+#define MIN_INTERVAL 10
 #define MAX_INTERVAL 120
 
 #define LONG_PRESS_DURATION 500
@@ -28,7 +28,7 @@ void setup() {
   pinMode(LED_PIN, OUTPUT);
   
   Serial.begin(9600);
-  
+
   Serial.println("Loading settings: ");
   damage = EEPROM.read(0);
   interval = EEPROM.read(1);

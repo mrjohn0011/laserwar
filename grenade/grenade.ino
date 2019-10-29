@@ -58,14 +58,13 @@ void settingsMode(){
         if (digitalRead(BTN_PIN) == HIGH){
             if (keyDownTime == 0){
                 keyDownTime = t;
+            } else if (t - keyDownTime > 1000){
+                keyDownTime = 0;
+                return;
             }
         } else if (keyDownTime > 0) {
-            if (t - keyDownTime > 1000){
+            if (keyDownTime > 0 && t - keyDownTime < 1000){
                 keyDownTime = 0;
-                saveSettings();
-                beep(200, 4);
-                break;
-            } else {
                 nextMode();
             }
         }
@@ -88,31 +87,35 @@ void loop() {
     if (t < SETTINGS_WAIT_TIME){
         if (digitalRead(BTN_PIN) == HIGH){
             settingsMode();
+            saveSettings();
+            lastUsedTime = 0;
+            beep(200, 4);
         }
-    }
-
-    if (used == '1'){
-        if (respawnTime == 0){
-            unsigned long cmd = lw.waitCommand(RESET_PIN);
-            if (cmd == RESPAWN_CMD){
-              restore();
-            }
-        } else {
-            if (lastUsedTime == 0) lastUsedTime = t;
-            if (t - lastUsedTime >= respawnTime * 1000){
+    } else {  
+      if (used == '1'){
+          if (respawnTime == 0){
+              unsigned long cmd = lw.waitCommand(RESET_PIN);
+              if (cmd == RESPAWN_CMD){
                 restore();
-            }
-        }
-    } else {
-        if (digitalRead(BTN_PIN) == HIGH){
-          bang();
-        }
+              }
+          } else {
+              if (lastUsedTime == 0) lastUsedTime = t;
+              if (t - lastUsedTime >= (unsigned long)respawnTime * 1000){
+                  restore();
+              }
+          }
+      } else {
+          if (digitalRead(BTN_PIN) == HIGH){
+            bang();
+          }
+      }
     }
 }
 
 void restore(){
   beep(700, 1);
   used = '0';
+  lastUsedTime = 0;
   EEPROM.write(0, used);
 }
 

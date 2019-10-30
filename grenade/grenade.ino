@@ -113,12 +113,17 @@ void loop() {
         if (digitalRead(BTN_PIN) == HIGH){
           if (keyDownTime == 0){
               keyDownTime = t;
-          } else if (t - keyDownTime > 1000){
+          } else if (t - keyDownTime >= 1000){
               keyDownTime = 0;
               settingsMode();
               saveSettings();
               lastUsedTime = 0;
               beep(200, 4);
+          }
+        } else {
+          if (keyDownTime > 0 && used == '0' && t - keyDownTime < 1000){
+            keyDownTime = 0;
+            bang();
           }
         }
     } else {  

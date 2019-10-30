@@ -12,14 +12,21 @@
 #define SETTINGS_WAIT_TIME 5000
 
 unsigned char used = '0';
+#define RESPAWN_MODES_COUNT 5
+unsigned long respawnTimes[RESPAWN_MODES_COUNT] = { 0, 5000, 60000, 300000, 600000 };
 unsigned long lastUsedTime = 0;
-byte respawnTime = 60;
+byte respawnMode = 2;
 
 LaserWar lw;
 
 void saveSettings(){
     EEPROM.write(0, used);
-    EEPROM.write(1, respawnTime);
+    EEPROM.write(1, respawnMode);
+    Serial.print("Saved settings: ");
+    Serial.print("Respawn Mode = ");
+    Serial.print(respawnMode);
+    Serial.print("; Used = ");
+    Serial.println(used == '0' ? 0 : 1);
 }
 
 void loadSettings(){
@@ -28,29 +35,44 @@ void loadSettings(){
         used = '0';
         saveSettings();
     } else {
-        respawnTime = EEPROM.read(1);
+        respawnMode = EEPROM.read(1);
     }
+    Serial.print("Loaded settings: ");
+    Serial.print("Respawn Mode = ");
+    Serial.print(respawnMode);
+    Serial.print("; Used = ");
+    Serial.println(used == '0' ? 0 : 1);
 }
 
 void setup() {
   pinMode(IR_PIN, OUTPUT);
   pinMode(RESET_PIN, INPUT);
+  pinMode(BTN_PIN, INPUT);
+  pinMode(TONE_PIN, OUTPUT);
+  Serial.begin(9600);
   loadSettings();
 }
 
 void nextMode(){
-    if (respawnTime > 180){
-        respawnTime = 0;
+    if (respawnMode == RESPAWN_MODES_COUNT - 1){
+        respawnMode = 0;
     } else {
-        respawnTime += 60;
+        respawnMode++;
     }
 
+    Serial.print("Respawn Mode = ");
+    Serial.println(respawnMode);
+    
     beep(500, 1);
     delay(200);
-    beep(200, respawnTime / 60);
+    beep(200, respawnMode);
+    
+    Serial.print("Respawn Time = ");
+    Serial.println(respawnTimes[respawnMode]);
 }
 
 void settingsMode(){
+    Serial.println("Settings mode");
     beep(200, 3);
     unsigned long keyDownTime = 0;
     while (true){
@@ -72,6 +94,7 @@ void settingsMode(){
 }
 
 void beep(int duration, byte count){
+    Serial.print("BEEP: "); Serial.print(duration); Serial.print("; "); Serial.println(count);
     for (int i = 0; i < count; i++){
         tone(TONE_PIN, 1000);
         delay(duration);
@@ -80,27 +103,34 @@ void beep(int duration, byte count){
             delay(duration);
         }
     }
+    Serial.println("BEEP END");
 }
 
+unsigned long keyDownTime = 0;
 void loop() {
     unsigned long t = millis();
     if (t < SETTINGS_WAIT_TIME){
         if (digitalRead(BTN_PIN) == HIGH){
-            settingsMode();
-            saveSettings();
-            lastUsedTime = 0;
-            beep(200, 4);
+          if (keyDownTime == 0){
+              keyDownTime = t;
+          } else if (t - keyDownTime > 1000){
+              keyDownTime = 0;
+              settingsMode();
+              saveSettings();
+              lastUsedTime = 0;
+              beep(200, 4);
+          }
         }
     } else {  
       if (used == '1'){
-          if (respawnTime == 0){
+          if (respawnMode == 0){
               unsigned long cmd = lw.waitCommand(RESET_PIN);
               if (cmd == RESPAWN_CMD){
                 restore();
               }
           } else {
               if (lastUsedTime == 0) lastUsedTime = t;
-              if (t - lastUsedTime >= (unsigned long)respawnTime * 1000){
+              if (t - lastUsedTime >= respawnTimes[respawnMode]){
                   restore();
               }
           }
@@ -116,10 +146,12 @@ void restore(){
   beep(700, 1);
   used = '0';
   lastUsedTime = 0;
+  Serial.println("Restore!");
   EEPROM.write(0, used);
 }
 
 void bang(){
+  Serial.println("Bang!");
   beep(500, BEFORE_BANG_DELAY);
   delay(500);
 

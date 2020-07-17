@@ -18,7 +18,7 @@ IRrecv ir(TSOP_PIN);
 decode_results results;
 
 unsigned long getColor(unsigned long shoot){
-    if (shoot > 0xFFFF || shoot < 0x1000) return -1;
+    if (shoot >= 0x1FFF) return -1;
     return (shoot & 0x30) >> 4;
 }
 

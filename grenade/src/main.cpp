@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <LaserWar.h>
-#include <EEPROM.h>
+#include <EEPROMex.h>
 
 #define TONE_PIN 0
 #define BTN_PIN 1

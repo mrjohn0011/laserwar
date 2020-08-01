@@ -1,11 +1,12 @@
 #include <Arduino.h>
 #include <LaserWar.h>
-#include <EEPROM.h>
+#include <EEPROMex.h>
 
 #define TONE_PIN 0
 #define BTN_PIN 1
 #define RESET_PIN 2
 #define IR_PIN 3
+#define MOTION_ENABLE_PIN 5
 #define MOTION_PIN 4
 #define BANGS_COUNT 3
 #define BEFORE_BANG_DELAY 4
@@ -52,6 +53,7 @@ void setup() {
   pinMode(BTN_PIN, INPUT);
   pinMode(TONE_PIN, OUTPUT);
   pinMode(MOTION_PIN, INPUT);
+  pinMode(MOTION_ENABLE_PIN, OUTPUT);
   Serial.begin(9600);
   loadSettings();
 }
@@ -110,6 +112,7 @@ void settingsMode(){
 }
 
 void bang(){
+  Serial.println("BANG!");
   for (byte i = 0; i < BANGS_COUNT; i++){
     lw.send(IR_PIN, BANG_CMD);
     delay(100);
@@ -121,12 +124,13 @@ void bang(){
 }
 
 void bangMode(){
-  Serial.println("Bang!");
+  Serial.println("Waiting for motion...");
   beep(500, BEFORE_BANG_DELAY);
   delay(500);
   beep(1000, 1);
 
   while (true){
+      digitalWrite(MOTION_ENABLE_PIN, HIGH);
       if(digitalRead(MOTION_PIN) == HIGH){
           bang();
           return;
@@ -177,6 +181,7 @@ void loop() {
               }
           }
       } else {
+          digitalWrite(MOTION_ENABLE_PIN, LOW);
           if (digitalRead(BTN_PIN) == HIGH){
             bangMode();
           }

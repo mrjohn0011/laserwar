@@ -8,7 +8,7 @@
 #define button 7
 #define WIN_MODE_COUNT 7
 unsigned long winModes[WIN_MODE_COUNT] = {2, 4, 6, 8, 10, 20, 30};
-unsigned long winMode = 0;
+unsigned long winMode = 2;
 unsigned long settingModeSeconds = 5;
 
 IRrecv ir(tsop);
@@ -77,16 +77,15 @@ void beep(int duration, int number){
 void win(unsigned long color){
   Serial.print("WIN COLOR: ");
   showColor(color);
-
-  for(int i = 0; i < ACTIVE_TIMES_COUNT; i++){
-    activeTimes[i] = 0;
-  }
-  currentTimeStart = millis();
-  activeColor = NO_COLOR;
   beep(1000, 3);
 
   while(true){
     if (digitalRead(button) == HIGH){
+      activeColor = NO_COLOR; 
+      for(int i = 0; i < ACTIVE_TIMES_COUNT; i++){
+        activeTimes[i] = 0;
+      }
+      currentTimeStart = millis();     
       beep(1000, 1);
       Serial.println("Point reset");
       return;

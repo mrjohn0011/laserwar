@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include <LaserWar.h>
 #include <EEPROM.h>
 
@@ -5,7 +6,6 @@
 #define BTN_PIN 1
 #define RESET_PIN 2
 #define IR_PIN 3
-#define MOTION_PIN 4
 #define BANGS_COUNT 3
 #define BEFORE_BANG_DELAY 4
 #define RESPAWN_CMD 0x8305e8
@@ -19,6 +19,43 @@ unsigned long lastUsedTime = 0;
 byte respawnMode = 2;
 
 LaserWar lw;
+
+void beep(int duration, byte count){
+    Serial.print("BEEP: "); Serial.print(duration); Serial.print("; "); Serial.println(count);
+    for (int i = 0; i < count; i++){
+        tone(TONE_PIN, 1000);
+        delay(duration);
+        noTone(TONE_PIN);
+        if (i < count - 1){
+            delay(duration);
+        }
+    }
+    Serial.println("BEEP END");
+}
+
+void restore(){
+  beep(700, 1);
+  used = '0';
+  lastUsedTime = 0;
+  Serial.println("Restore!");
+  EEPROM.write(0, used);
+}
+
+void bang(){
+  Serial.println("Bang!");
+  beep(500, BEFORE_BANG_DELAY);
+  delay(500);
+
+  for (byte i = 0; i < BANGS_COUNT; i++){
+    lw.send(IR_PIN, BANG_CMD);
+    delay(100);
+  }
+
+  used = '1';
+  EEPROM.write(0, used);
+
+  beep(2000, 1);
+}
 
 void saveSettings(){
     EEPROM.write(0, used);
@@ -50,7 +87,6 @@ void setup() {
   pinMode(RESET_PIN, INPUT);
   pinMode(BTN_PIN, INPUT);
   pinMode(TONE_PIN, OUTPUT);
-  pinMode(MOTION_PIN, INPUT);
   Serial.begin(9600);
   loadSettings();
 }
@@ -95,19 +131,6 @@ void settingsMode(){
     }
 }
 
-void beep(int duration, byte count){
-    Serial.print("BEEP: "); Serial.print(duration); Serial.print("; "); Serial.println(count);
-    for (int i = 0; i < count; i++){
-        tone(TONE_PIN, 1000);
-        delay(duration);
-        noTone(TONE_PIN);
-        if (i < count - 1){
-            delay(duration);
-        }
-    }
-    Serial.println("BEEP END");
-}
-
 unsigned long keyDownTime = 0;
 void loop() {
     unsigned long t = millis();
@@ -125,7 +148,7 @@ void loop() {
         } else {
           if (keyDownTime > 0 && used == '0' && t - keyDownTime < 1000){
             keyDownTime = 0;
-            bangMode();
+            bang();
           }
         }
     } else {  
@@ -143,42 +166,8 @@ void loop() {
           }
       } else {
           if (digitalRead(BTN_PIN) == HIGH){
-            bangMode();
+            bang();
           }
       }
     }
-}
-
-void restore(){
-  beep(700, 1);
-  used = '0';
-  lastUsedTime = 0;
-  Serial.println("Restore!");
-  EEPROM.write(0, used);
-}
-
-void bang(){
-  for (byte i = 0; i < BANGS_COUNT; i++){
-    lw.send(IR_PIN, BANG_CMD);
-    delay(100);
-  }
-
-  used = '1';
-  EEPROM.write(0, used);
-  beep(2000, 1);
-}
-
-void bangMode(){
-  Serial.println("Bang!");
-  beep(500, BEFORE_BANG_DELAY);
-  delay(500);
-  beep(1000, 1);
-
-  while (true){
-      if(digitalRead(MOTION_PIN) == HIGH){
-          bang();
-          return;
-      }
-  }
-  
 }

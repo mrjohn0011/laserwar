@@ -11,11 +11,13 @@
 #define RESPAWN_CMD 0x8305e8
 #define BANG_CMD 0x830be8
 #define SETTINGS_WAIT_TIME 5000
+#define MINUTES_BEFORE_SEARCH 15
 
 unsigned char used = '0';
 #define RESPAWN_MODES_COUNT 5
 unsigned long respawnTimes[RESPAWN_MODES_COUNT] = { 0, 5000, 60000, 300000, 600000 };
 unsigned long lastUsedTime = 0;
+unsigned long searchStartTime = 0;
 byte respawnMode = 2;
 
 LaserWar lw;
@@ -37,6 +39,7 @@ void restore(){
   beep(700, 1);
   used = '0';
   lastUsedTime = 0;
+  searchStartTime = millis();
   Serial.println("Restore!");
   EEPROM.write(0, used);
 }
@@ -52,6 +55,7 @@ void bang(){
   }
 
   used = '1';
+  searchStartTime = 0;
   EEPROM.write(0, used);
 
   beep(2000, 1);
@@ -131,6 +135,18 @@ void settingsMode(){
     }
 }
 
+void searchMode(){
+    while (true){
+        if (digitalRead(BTN_PIN) == HIGH){
+            searchStartTime = 0;
+            delay(2000);
+            return;
+        }
+        beep(100, 1);
+        delay(200);
+    }
+}
+
 unsigned long keyDownTime = 0;
 void loop() {
     unsigned long t = millis();
@@ -157,6 +173,7 @@ void loop() {
               unsigned long cmd = lw.waitCommand(RESET_PIN);
               if (cmd == RESPAWN_CMD){
                 restore();
+                searchStartTime = 0;
               }
           } else {
               if (lastUsedTime == 0) lastUsedTime = t;
@@ -165,8 +182,12 @@ void loop() {
               }
           }
       } else {
-          if (digitalRead(BTN_PIN) == HIGH){
-            bang();
+          if (searchStartTime > 0 && t - searchStartTime > MINUTES_BEFORE_SEARCH * 60000){
+            searchMode();
+          } else {
+            if (digitalRead(BTN_PIN) == HIGH){
+                bang();
+            }
           }
       }
     }

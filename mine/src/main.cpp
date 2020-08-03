@@ -4,9 +4,8 @@
 
 #define TONE_PIN 0
 #define BTN_PIN 1
-#define RESET_PIN 2
+#define MOTION_ENABLE_PIN 2
 #define IR_PIN 3
-#define MOTION_ENABLE_PIN 5
 #define MOTION_PIN 4
 #define BANGS_COUNT 3
 #define BEFORE_BANG_DELAY 4
@@ -16,9 +15,9 @@
 
 unsigned char used = '0';
 #define RESPAWN_MODES_COUNT 5
-unsigned long respawnTimes[RESPAWN_MODES_COUNT] = { 0, 5000, 60000, 300000, 600000 };
+unsigned long respawnTimes[RESPAWN_MODES_COUNT] = { 5000, 60000, 300000, 600000 };
 unsigned long lastUsedTime = 0;
-byte respawnMode = 2;
+byte respawnMode = 1;
 
 LaserWar lw;
 
@@ -49,7 +48,6 @@ void loadSettings(){
 
 void setup() {
   pinMode(IR_PIN, OUTPUT);
-  pinMode(RESET_PIN, INPUT);
   pinMode(BTN_PIN, INPUT);
   pinMode(TONE_PIN, OUTPUT);
   pinMode(MOTION_PIN, INPUT);
@@ -169,17 +167,10 @@ void loop() {
         }
     } else {  
       if (used == '1'){
-          if (respawnMode == 0){
-              unsigned long cmd = lw.waitCommand(RESET_PIN);
-              if (cmd == RESPAWN_CMD){
-                restore();
-              }
-          } else {
-              if (lastUsedTime == 0) lastUsedTime = t;
-              if (t - lastUsedTime >= respawnTimes[respawnMode]){
-                  restore();
-              }
-          }
+        if (lastUsedTime == 0) lastUsedTime = t;
+        if (t - lastUsedTime >= respawnTimes[respawnMode]){
+            restore();
+        }
       } else {
           digitalWrite(MOTION_ENABLE_PIN, LOW);
           if (digitalRead(BTN_PIN) == HIGH){

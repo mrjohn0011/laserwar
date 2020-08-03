@@ -1,17 +1,18 @@
 #include <Arduino.h>
 #include <IRremote.h>
-#define rgb_r 3
-#define rgb_g 10
-#define rgb_b 11
-#define tsop 9
-#define tonePin 8
-#define button 7
+#define RGB_R 3
+#define RGB_G 10
+#define RGB_B 11
+#define ALARM_PIN 6
+#define BUTTON_PIN 7
+#define TONE_PIN 8
+#define TSOP_PIN 9
 #define WIN_MODE_COUNT 7
 unsigned long winModes[WIN_MODE_COUNT] = {2, 4, 6, 8, 10, 20, 30};
 unsigned long winMode = 2;
 unsigned long settingModeSeconds = 5;
 
-IRrecv ir(tsop);
+IRrecv ir(TSOP_PIN);
 decode_results results;
 const unsigned long RED_COLOR = 0;
 const unsigned long BLUE_COLOR = 1;
@@ -42,33 +43,43 @@ void showColor(unsigned long color){
 void setRgbColor(unsigned long color){
   switch (color){
   case RED_COLOR:
-    digitalWrite(rgb_r, HIGH);
-    digitalWrite(rgb_g, LOW);
-    digitalWrite(rgb_b, LOW);
+    digitalWrite(RGB_R, HIGH);
+    digitalWrite(RGB_G, LOW);
+    digitalWrite(RGB_B, LOW);
     break;
   case BLUE_COLOR:
-    digitalWrite(rgb_r, LOW);
-    digitalWrite(rgb_g, LOW);
-    digitalWrite(rgb_b, HIGH);
+    digitalWrite(RGB_R, LOW);
+    digitalWrite(RGB_G, LOW);
+    digitalWrite(RGB_B, HIGH);
     break;
   case GREEN_COLOR:
-    digitalWrite(rgb_r, LOW);
-    digitalWrite(rgb_g, HIGH);
-    digitalWrite(rgb_b, LOW);
+    digitalWrite(RGB_R, LOW);
+    digitalWrite(RGB_G, HIGH);
+    digitalWrite(RGB_B, LOW);
     break;
   default:
-    digitalWrite(rgb_r, LOW);
-    digitalWrite(rgb_g, LOW);
-    digitalWrite(rgb_b, LOW);
+    digitalWrite(RGB_R, LOW);
+    digitalWrite(RGB_G, LOW);
+    digitalWrite(RGB_B, LOW);
     break;
+  }
+}
+
+void alarm(int duration, int number){
+  for (int i = 0; i < number; i++){
+    digitalWrite(ALARM_PIN, HIGH);
+    delay(duration);
+    digitalWrite(ALARM_PIN, LOW);
+    delay(duration);
+    Serial.println("ALARM");
   }
 }
 
 void beep(int duration, int number){
   for (int i = 0; i < number; i++){
-    tone(tonePin, 1000);
+    tone(TONE_PIN, 1000);
     delay(duration);
-    noTone(tonePin);
+    noTone(TONE_PIN);
     delay(duration);
     Serial.println("BEEP");
   }
@@ -77,10 +88,10 @@ void beep(int duration, int number){
 void win(unsigned long color){
   Serial.print("WIN COLOR: ");
   showColor(color);
-  beep(1000, 3);
+  alarm(1000, 3);
 
   while(true){
-    if (digitalRead(button) == HIGH){
+    if (digitalRead(BUTTON_PIN) == HIGH){
       activeColor = NO_COLOR; 
       for(int i = 0; i < ACTIVE_TIMES_COUNT; i++){
         activeTimes[i] = 0;
@@ -109,12 +120,12 @@ unsigned long getColor(unsigned long shoot){
 
 void setup() {
   Serial.begin(9600);
-  pinMode(rgb_r, OUTPUT);
-  pinMode(rgb_g, OUTPUT);
-  pinMode(rgb_b, OUTPUT);
-  pinMode(tsop, INPUT);
-  pinMode(tonePin, OUTPUT);
-  pinMode(button, INPUT);
+  pinMode(RGB_R, OUTPUT);
+  pinMode(RGB_G, OUTPUT);
+  pinMode(RGB_B, OUTPUT);
+  pinMode(TSOP_PIN, INPUT);
+  pinMode(TONE_PIN, OUTPUT);
+  pinMode(BUTTON_PIN, INPUT);
   ir.enableIRIn();
   Serial.println("Point initialized");
 }
@@ -143,7 +154,7 @@ void settingsMode(){
     unsigned long keyDownTime = 0;
     while (true){
         unsigned long t = millis();
-        if (digitalRead(button) == HIGH){
+        if (digitalRead(BUTTON_PIN) == HIGH){
             if (keyDownTime == 0){
                 keyDownTime = t;
             } else if (t - keyDownTime > 1000){
@@ -165,7 +176,7 @@ void loop() {
   unsigned long now = millis();
 
   if (now < settingModeSeconds * 1000){
-    if (digitalRead(button) == HIGH){
+    if (digitalRead(BUTTON_PIN) == HIGH){
       if (keyDownTime == 0){
           keyDownTime = now;
       } else if (now - keyDownTime >= 1000){
@@ -187,7 +198,7 @@ void loop() {
       activeColor = color;
       Serial.print("Color changed to "); showColor(activeColor);
       setRgbColor(activeColor);
-      beep(1000, 1);
+      alarm(1000, 1);
     }
     ir.resume();
   }

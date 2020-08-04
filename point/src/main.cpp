@@ -125,6 +125,7 @@ void setup() {
   pinMode(RGB_B, OUTPUT);
   pinMode(TSOP_PIN, INPUT);
   pinMode(TONE_PIN, OUTPUT);
+  pinMode(ALARM_PIN, OUTPUT);
   pinMode(BUTTON_PIN, INPUT);
   ir.enableIRIn();
   Serial.println("Point initialized");

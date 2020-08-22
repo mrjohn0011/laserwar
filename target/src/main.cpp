@@ -2,14 +2,14 @@
 #include <IRremote.h>
 
 #define LIGHT_TIME 3
-#define TSOP_PIN 2
+#define TSOP_PIN 9
 
 #define COLOR_RED 0
 #define COLOR_BLUE 1
 #define COLOR_YELLOW 2
 #define COLOR_GREEN 4
 
-#define R_PIN 9
+#define R_PIN 7
 #define G_PIN 10
 #define B_PIN 11
 #define LIGHT_TIME 3

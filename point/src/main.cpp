@@ -1,15 +1,16 @@
 #include <Arduino.h>
 #include <IRremote.h>
-#define RGB_R 3
-#define RGB_G 10
-#define RGB_B 11
+#define RGB_R 10
+#define RGB_G 11
+#define RGB_B 3
 #define ALARM_PIN 6
 #define BUTTON_PIN 7
 #define TONE_PIN 8
 #define TSOP_PIN 9
 #define WIN_MODE_COUNT 7
+#define RESPAWN_CMD 0x8305e8
 unsigned long winModes[WIN_MODE_COUNT] = {2, 4, 6, 8, 10, 20, 30};
-unsigned long winMode = 2;
+unsigned long winMode = 4;
 unsigned long settingModeSeconds = 5;
 
 IRrecv ir(TSOP_PIN);
@@ -85,6 +86,16 @@ void beep(int duration, int number){
   }
 }
 
+void resetPoint() {
+  activeColor = NO_COLOR; 
+  for(int i = 0; i < ACTIVE_TIMES_COUNT; i++){
+    activeTimes[i] = 0;
+  }
+  currentTimeStart = millis();     
+  beep(1000, 1);
+  Serial.println("Point reset");
+}
+
 void win(unsigned long color){
   Serial.print("WIN COLOR: ");
   showColor(color);
@@ -92,13 +103,7 @@ void win(unsigned long color){
 
   while(true){
     if (digitalRead(BUTTON_PIN) == HIGH){
-      activeColor = NO_COLOR; 
-      for(int i = 0; i < ACTIVE_TIMES_COUNT; i++){
-        activeTimes[i] = 0;
-      }
-      currentTimeStart = millis();     
-      beep(1000, 1);
-      Serial.println("Point reset");
+      resetPoint();
       return;
     }
     
@@ -190,25 +195,29 @@ void loop() {
 
   if (ir.decode(&results)){
     Serial.print("Signal: "); Serial.println(results.value, HEX);
-    unsigned long color = getColor(results.value);
-    if (color != NO_COLOR && color != activeColor){
-      currentDuration = (now - currentTimeStart) / 1000;
-      activeTimes[activeColor] += currentDuration;
-      Serial.print(currentDuration); Serial.print("s for "); showColor(activeColor);
-      currentTimeStart = now;
-      activeColor = color;
-      Serial.print("Color changed to "); showColor(activeColor);
-      setRgbColor(activeColor);
-      alarm(1000, 1);
+    if (results.value == RESPAWN_CMD){
+      resetPoint();
+    } else {
+      unsigned long color = getColor(results.value);
+      if (color != NO_COLOR && color != activeColor){
+        currentDuration = (now - currentTimeStart) / 1000;
+        activeTimes[activeColor] += currentDuration;
+        Serial.print(currentDuration); Serial.print("s for "); showColor(activeColor);
+        currentTimeStart = now;
+        activeColor = color;
+        Serial.print("Color changed to "); showColor(activeColor);
+        setRgbColor(activeColor);
+        alarm(1000, 1);
+      }
+      ir.resume();
     }
-    ir.resume();
   }
 
   if(activeColor != NO_COLOR){
     unsigned long currentDuration = ((now - currentTimeStart) / 1000) + activeTimes[activeColor];
     if(currentDuration > winModes[winMode] * 60){
       Serial.print("Win duration: "); Serial.println(currentDuration);
-      Serial.print("Linit: "); Serial.println(winModes[winMode] * 60);
+      Serial.print("Win time: "); Serial.println(winModes[winMode] * 60);
       win(activeColor);
     }
   }

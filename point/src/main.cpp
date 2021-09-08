@@ -10,7 +10,7 @@
 #define WIN_MODE_COUNT 7
 #define RESPAWN_CMD 0x8305e8
 unsigned long winModes[WIN_MODE_COUNT] = {2, 4, 6, 8, 10, 20, 30};
-unsigned long winMode = 2;
+unsigned long winMode = 4;
 unsigned long settingModeSeconds = 5;
 
 IRrecv ir(TSOP_PIN);
@@ -217,7 +217,7 @@ void loop() {
     unsigned long currentDuration = ((now - currentTimeStart) / 1000) + activeTimes[activeColor];
     if(currentDuration > winModes[winMode] * 60){
       Serial.print("Win duration: "); Serial.println(currentDuration);
-      Serial.print("Linit: "); Serial.println(winModes[winMode] * 60);
+      Serial.print("Win time: "); Serial.println(winModes[winMode] * 60);
       win(activeColor);
     }
   }

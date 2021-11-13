@@ -1,8 +1,15 @@
 #include <Arduino.h>
 #include <IRremote.h>
+
+// FIRST POINT PINS
+// #define RGB_R 3
+// #define RGB_G 10
+// #define RGB_B 11
+
 #define RGB_R 10
 #define RGB_G 11
 #define RGB_B 3
+
 #define ALARM_PIN 6
 #define BUTTON_PIN 7
 #define TONE_PIN 8
@@ -17,7 +24,7 @@ IRrecv ir(TSOP_PIN);
 decode_results results;
 const unsigned long RED_COLOR = 0;
 const unsigned long BLUE_COLOR = 1;
-const unsigned long GREEN_COLOR = 4;
+const unsigned long GREEN_COLOR = 3;
 const unsigned long NO_COLOR = 5;
 unsigned long activeColor = NO_COLOR;
 #define ACTIVE_TIMES_COUNT 6
@@ -209,8 +216,8 @@ void loop() {
         setRgbColor(activeColor);
         alarm(1000, 1);
       }
-      ir.resume();
     }
+    ir.resume();
   }
 
   if(activeColor != NO_COLOR){

@@ -1,14 +1,9 @@
 #include <Arduino.h>
 #include <IRremote.h>
 
-// FIRST POINT PINS
-// #define RGB_R 3
-// #define RGB_G 10
-// #define RGB_B 11
-
 #define RGB_R 10
 #define RGB_G 11
-#define RGB_B 3
+#define RGB_B 2
 
 #define ALARM_PIN 6
 #define BUTTON_PIN 7
@@ -19,6 +14,17 @@
 unsigned long winModes[WIN_MODE_COUNT] = {2, 4, 6, 8, 10, 20, 30};
 unsigned long winMode = 4;
 unsigned long settingModeSeconds = 5;
+
+// Voltage measuring
+#define VOLTAGE_PIN A1
+#define RED_VOLTAGE_PIN 12
+#define GREEN_VOLTAGE_PIN 3
+#define BLUE_VOLTAGE_PIN 4
+double R1 = 1332;  // battery plus to analog pin resistor
+double R2 = 666;  // analog pin to ground resistor
+double Vref = 4.99; // etalon voltage (ref pin)
+double Vmax = Vref*(R1+R2)/R2; // maximum battery voltage
+double k = Vmax/1023; // measuring koefficient
 
 IRrecv ir(TSOP_PIN);
 decode_results results;
@@ -139,8 +145,17 @@ void setup() {
   pinMode(TONE_PIN, OUTPUT);
   pinMode(ALARM_PIN, OUTPUT);
   pinMode(BUTTON_PIN, INPUT);
+  analogReference(EXTERNAL);
+  double voltage = analogRead(VOLTAGE_PIN);
   ir.enableIRIn();
   Serial.println("Point initialized");
+  Serial.print("Maximum battery voltage: ");
+  Serial.println(Vmax, 2);
+  Serial.print("Actual Voltage: ");
+  Serial.print(voltage);
+  Serial.print(" = ");
+  Serial.print(voltage*k, 2);
+  Serial.println("V");
 }
 
 void nextMode(){
@@ -183,8 +198,26 @@ void settingsMode(){
     }
 }
 
+void measureVoltage() {
+  double v = analogRead(VOLTAGE_PIN)*k;
+  if (v >= 12.0){
+    digitalWrite(GREEN_VOLTAGE_PIN, HIGH);
+    digitalWrite(BLUE_VOLTAGE_PIN, LOW);
+    digitalWrite(RED_VOLTAGE_PIN, LOW);
+  } else if (v > 11){
+    digitalWrite(GREEN_VOLTAGE_PIN, LOW);
+    digitalWrite(BLUE_VOLTAGE_PIN, HIGH);
+    digitalWrite(RED_VOLTAGE_PIN, LOW);
+  } else {
+    digitalWrite(GREEN_VOLTAGE_PIN, LOW);
+    digitalWrite(BLUE_VOLTAGE_PIN, LOW);
+    digitalWrite(RED_VOLTAGE_PIN, HIGH);
+  }
+}
+
 unsigned long keyDownTime = 0;
 unsigned long currentDuration = 0;
+
 void loop() {
   unsigned long now = millis();
 
@@ -199,6 +232,8 @@ void loop() {
       }
     }
   }
+
+  measureVoltage();
 
   if (ir.decode(&results)){
     Serial.print("Signal: "); Serial.println(results.value, HEX);

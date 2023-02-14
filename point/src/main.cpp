@@ -1,41 +1,72 @@
 #include <Arduino.h>
 #include <IRremote.h>
+#include <TimerMs.h>
+#include <EncButton.h>
+#include <GRGB.h>
 
-#define RGB_R 10
-#define RGB_G 11
-#define RGB_B 2
-
+// RGB LED STRIPE with common CATHODE (-) used 
+#define RGB_R 5
+#define RGB_G 4
+#define RGB_B 3
+// 12V Active fire alarm is used
 #define ALARM_PIN 6
+// The button connects 3.3V with PIN. 10K Resistor connects the PIN and GND
 #define BUTTON_PIN 7
+// An active buzzer 5V is used
 #define TONE_PIN 8
+// TSOP34856 or TSOP34838 is used
 #define TSOP_PIN 9
-#define WIN_MODE_COUNT 7
+// Voltage measuring RGB LED
+#define VOLTAGE_R 10
+#define VOLTAGE_G 11
+#define VOLTAGE_B 12
+// LaserWar new game command
 #define RESPAWN_CMD 0x8305e8
+// How many win modes the point has
+#define WIN_MODE_COUNT 7
+// How many milliseconds after turning on we allow to enter the admin mode by pressing the button
+#define SETTINGS_MODE_TIMEOUT 5000
+// How many minutes should the team held the point captured to win
 unsigned long winModes[WIN_MODE_COUNT] = {2, 4, 6, 8, 10, 20, 30};
+// Default win mode after the point turned on (start counting from 0)
 unsigned long winMode = 4;
-unsigned long settingModeSeconds = 5;
 
-// Voltage measuring
+GRGB stripe(COMMON_CATHODE, RGB_R, RGB_G, RGB_B);
+
+/**
+ * Voltage measuring
+ * Using 1 RGB LED connected to PINS
+ * Fully Charged: The voltage is greater than GREEN_VOLTAGE_LEVEL
+ * Middle charged: The voltage is greater than BLUE_VOLTAGE_PIN but lower than GREEN_VOLTAGE_LEVEL
+ * Discharged and stop working: The voltage is lower than BLUE_VOLTAGE_PIN
+ */
 #define VOLTAGE_PIN A1
-#define RED_VOLTAGE_PIN 12
-#define GREEN_VOLTAGE_PIN 3
-#define BLUE_VOLTAGE_PIN 4
-double R1 = 1332;  // battery plus to analog pin resistor
-double R2 = 666;  // analog pin to ground resistor
-double Vref = 4.99; // etalon voltage (ref pin)
-double Vmax = Vref*(R1+R2)/R2; // maximum battery voltage
-double k = Vmax/1023; // measuring koefficient
+#define GREEN_VOLTAGE_LEVEL 7.8
+#define BLUE_VOLTAGE_LEVEL 6.1
+GRGB chargeIndicator(COMMON_CATHODE, VOLTAGE_R, VOLTAGE_G, VOLTAGE_B);
+
+double R1 = 1333;  // Battery plus to VOLTAGE_PIN resistor. Can be used any resistor
+double R2 = 666;  // VOLTAGE_PIN to GND resistor. Can be used any resistor 2 times smaller than R1
+double Vref = 5.0; // Etalon voltage (The voltage on Arduino Ref pin)
+double Vmax = Vref*(R1+R2)/R2; // Maximum battery voltage
+double k = Vmax/1024; // Measuring koefficient. Always equals Vmax/1023
+//=========================================
 
 IRrecv ir(TSOP_PIN);
 decode_results results;
 const unsigned long RED_COLOR = 0;
 const unsigned long BLUE_COLOR = 1;
+const unsigned long YELLOW_COLOR = 2;
 const unsigned long GREEN_COLOR = 3;
 const unsigned long NO_COLOR = 5;
 unsigned long activeColor = NO_COLOR;
 #define ACTIVE_TIMES_COUNT 6
 unsigned long activeTimes[ACTIVE_TIMES_COUNT] = {0, 0, 0, 0, 0, 0};
 unsigned long currentTimeStart = 0;
+
+TimerMs winTimer;
+TimerMs settingsModeTimer(SETTINGS_MODE_TIMEOUT, true, true);
+EncButton<EB_TICK, BUTTON_PIN> btn;
 
 void showColor(unsigned long color){
   switch (color) {
@@ -48,6 +79,9 @@ void showColor(unsigned long color){
     case GREEN_COLOR:
       Serial.println("GREEN");
       break;
+    case YELLOW_COLOR:
+      Serial.println("YELLOW");
+      break;
     default:
       Serial.println("UNDEFINED");
       break;
@@ -57,24 +91,18 @@ void showColor(unsigned long color){
 void setRgbColor(unsigned long color){
   switch (color){
   case RED_COLOR:
-    digitalWrite(RGB_R, HIGH);
-    digitalWrite(RGB_G, LOW);
-    digitalWrite(RGB_B, LOW);
+    stripe.setHEX(0xFF0000);
     break;
   case BLUE_COLOR:
-    digitalWrite(RGB_R, LOW);
-    digitalWrite(RGB_G, LOW);
-    digitalWrite(RGB_B, HIGH);
+    stripe.setHEX(0x0000FF);
     break;
   case GREEN_COLOR:
-    digitalWrite(RGB_R, LOW);
-    digitalWrite(RGB_G, HIGH);
-    digitalWrite(RGB_B, LOW);
+    stripe.setHEX(0x00FF00);
+  case YELLOW_COLOR:
+    stripe.setHEX(0xFFFF00);
     break;
   default:
-    digitalWrite(RGB_R, LOW);
-    digitalWrite(RGB_G, LOW);
-    digitalWrite(RGB_B, LOW);
+    stripe.disable();
     break;
   }
 }
@@ -104,7 +132,8 @@ void resetPoint() {
   for(int i = 0; i < ACTIVE_TIMES_COUNT; i++){
     activeTimes[i] = 0;
   }
-  currentTimeStart = millis();     
+  currentTimeStart = millis();
+  setRgbColor(NO_COLOR);     
   beep(1000, 1);
   Serial.println("Point reset");
 }
@@ -113,17 +142,31 @@ void win(unsigned long color){
   Serial.print("WIN COLOR: ");
   showColor(color);
   alarm(1000, 3);
+  winTimer.start();
+  bool ledOn = false;
 
   while(true){
-    if (digitalRead(BUTTON_PIN) == HIGH){
+    btn.tick();
+    if (btn.press()){
       resetPoint();
       return;
     }
     
-    setRgbColor(color);
-    delay(1000);
-    setRgbColor(NO_COLOR);
-    delay(1000);
+    if (ir.decode(&results)){
+      Serial.print("Signal: "); Serial.println(results.value, HEX);
+      if (results.value == RESPAWN_CMD){
+        resetPoint();
+        winTimer.stop();
+        return;
+      }
+      ir.resume();
+      delay(100);
+    }
+
+    if (winTimer.tick()){
+       setRgbColor(ledOn ? NO_COLOR : color);
+       ledOn = !ledOn;
+    }
   }
 }
 
@@ -145,8 +188,8 @@ void setup() {
   pinMode(TONE_PIN, OUTPUT);
   pinMode(ALARM_PIN, OUTPUT);
   pinMode(BUTTON_PIN, INPUT);
-  analogReference(EXTERNAL);
   double voltage = analogRead(VOLTAGE_PIN);
+  btn.setButtonLevel(HIGH);
   ir.enableIRIn();
   Serial.println("Point initialized");
   Serial.print("Maximum battery voltage: ");
@@ -166,71 +209,55 @@ void nextMode(){
     }
 
     Serial.print("Win Mode = ");
-    Serial.println(winMode);
+    Serial.print(winMode);
+    Serial.print("; Win minutes = ");
+    Serial.println(winModes[winMode]);
     
     beep(500, 1);
     delay(200);
     beep(200, winMode);
-    
-    Serial.print("Win minutes = ");
-    Serial.println(winModes[winMode]);
 }
 
 void settingsMode(){
     Serial.println("Settings mode");
     beep(200, 3);
-    unsigned long keyDownTime = 0;
+
     while (true){
-        unsigned long t = millis();
-        if (digitalRead(BUTTON_PIN) == HIGH){
-            if (keyDownTime == 0){
-                keyDownTime = t;
-            } else if (t - keyDownTime > 1000){
-                keyDownTime = 0;
-                return;
-            }
-        } else if (keyDownTime > 0) {
-            if (keyDownTime > 0 && t - keyDownTime < 1000){
-                keyDownTime = 0;
-                nextMode();
-            }
+        btn.tick();
+        if (btn.click()){
+          nextMode();
+        }
+
+        if (btn.held()){
+          Serial.println("Exit settings mode");
+          beep(200, 4);
+          return;
         }
     }
 }
 
-void measureVoltage() {
+void measureVoltage() { 
   double v = analogRead(VOLTAGE_PIN)*k;
-  if (v >= 12.0){
-    digitalWrite(GREEN_VOLTAGE_PIN, HIGH);
-    digitalWrite(BLUE_VOLTAGE_PIN, LOW);
-    digitalWrite(RED_VOLTAGE_PIN, LOW);
-  } else if (v > 11){
-    digitalWrite(GREEN_VOLTAGE_PIN, LOW);
-    digitalWrite(BLUE_VOLTAGE_PIN, HIGH);
-    digitalWrite(RED_VOLTAGE_PIN, LOW);
+  if (v >= GREEN_VOLTAGE_LEVEL){
+    chargeIndicator.setHEX(0x00FF00);
+  } else if (v >= BLUE_VOLTAGE_LEVEL){
+    chargeIndicator.setHEX(0x0000FF);
   } else {
-    digitalWrite(GREEN_VOLTAGE_PIN, LOW);
-    digitalWrite(BLUE_VOLTAGE_PIN, LOW);
-    digitalWrite(RED_VOLTAGE_PIN, HIGH);
+    Serial.println("Low voltage. The point is disabled");
+     while (true){
+      chargeIndicator.setHEX(0xFF0000);
+    }
   }
 }
 
-unsigned long keyDownTime = 0;
 unsigned long currentDuration = 0;
 
 void loop() {
   unsigned long now = millis();
+  btn.tick();
 
-  if (now < settingModeSeconds * 1000){
-    if (digitalRead(BUTTON_PIN) == HIGH){
-      if (keyDownTime == 0){
-          keyDownTime = now;
-      } else if (now - keyDownTime >= 1000){
-          keyDownTime = 0;
-          settingsMode();
-          beep(200, 4);
-      }
-    }
+  if (settingsModeTimer.active() && !settingsModeTimer.tick() && btn.press()) {
+    settingsMode();
   }
 
   measureVoltage();

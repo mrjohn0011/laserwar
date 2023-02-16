@@ -1,0 +1,22 @@
+{
+    "$schema": "https://raw.githubusercontent.com/platformio/platformio-core/develop/platformio/assets/schema/library.json",
+    "name": "BlinkTimer",
+    "version": "1.0.0",
+    "description": "A plugin for the Gyver TimerMs library allows you to blink with certain time intervals and have the current state in the callback",
+    "authors": {
+        "name": "Eugeniy Maslyaev",
+        "email": "mrjohn2009@yandex.ru"
+    },
+    "frameworks": ["arduino"],
+    "dependencies": {
+        "gyverlibs/TimerMs": "^1.2"
+    },
+    "keywords": ["TimerMs", "BlinkTimer"],
+    "examples": [
+        {
+            "name": "Simple Example",
+            "base": "examples/simple",
+            "files": ["simple.ino"]
+        }
+    ]
+}

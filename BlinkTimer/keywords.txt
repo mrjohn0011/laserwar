@@ -1,0 +1,5 @@
+BlinkTimer  KEYWORD1
+setHandler  KEYWORD2
+setOnFinish KEYWORD2
+blink   KEYWORD2
+tick    KEYWORD2

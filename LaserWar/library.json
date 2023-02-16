@@ -12,8 +12,13 @@
     "examples": [
         {
             "name": "Send command",
-            "base": "examples/simple",
-            "files": ["simple.ino"]
+            "base": "examples/send_command",
+            "files": ["send_command.ino"]
+        },
+        {
+            "name": "Receive command",
+            "base": "examples/read_command",
+            "files": ["read_command.ino"]
         }
     ]
 }

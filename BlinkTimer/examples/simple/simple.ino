@@ -25,6 +25,8 @@ BlinkTimer tmr(handler);
 void setup(){
   Serial.begin(9600);
   tmr.setOnFinish(onBlinkEnd);
+  // 1st call with positive state will be in 1.5s after blink() is called
+  tmr.setDelayBefore(1500);
   /**
    * Blink 3 times with 1000 ms interval. 
    * handler will be called 6 times for each on/off state

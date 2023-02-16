@@ -3,3 +3,5 @@ setHandler  KEYWORD2
 setOnFinish KEYWORD2
 blink   KEYWORD2
 tick    KEYWORD2
+stop    KEYWORD2
+setDelayBefore  KEYWORD2

@@ -1,17 +1,20 @@
+#include <Arduino.h>
 #include <LaserWar.h>
-#define TSOP_PIN 3
+
+// Use TSOP 34856 to decode signals
+#define TSOP_34856_PIN 3
 
 LaserWar lw;
 
 void setup() {
   Serial.begin(9600);
   Serial.println("Ready");
-  pinMode(TSOP_PIN, INPUT);
+  pinMode(TSOP_34856_PIN, INPUT);
 }
 
 void loop() {
-  unsigned long cmd = lw.waitCommand(TSOP_PIN);
-  if (cmd != 0) {
+  unsigned long cmd = lw.waitCommand(TSOP_34856_PIN);
+  if (cmd) {
     Serial.println(cmd);
   }
 }

@@ -1,5 +1,9 @@
+#include <Arduino.h>
 #include <LaserWar.h>
+
+// Use 940nm IR LED to send commands
 #define LED_PIN 3
+// See all possible commands here https://laserwar.com/support/dataprotocol
 #define RADIATION 0xa032e8
 
 LaserWar lw;

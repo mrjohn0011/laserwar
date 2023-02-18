@@ -1,3 +1,8 @@
 LaserWar	KEYWORD1
-waitCommand	KEYWORD2
+read	KEYWORD2
 send	KEYWORD2
+setAnalogPin KEYWORD2
+setThreshold KEYWORD2
+setDurationOfHeader KEYWORD2
+setDurationOfOne KEYWORD2
+setPin KEYWORD2

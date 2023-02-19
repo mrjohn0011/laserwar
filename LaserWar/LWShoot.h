@@ -9,8 +9,12 @@ class LWShoot: public Printable {
         unsigned long color;
         unsigned char damage, id;
     public:
+        LWShoot(){}
+        LWShoot(LWColor color, unsigned char damage, unsigned char id){
+            this->setShoot(color, damage, id);
+        }
         bool load(unsigned long signal){
-            if (signal >= 0x1FFF) return false;
+            if (signal >= 0x1FFF || signal <= 0x40) return false;
             this->damage = dmg_list[signal & 0b1111];
             this->color = (signal >> 4) & 0b11;
             this->id = (signal >> 6) & 0b1111111;
@@ -24,7 +28,7 @@ class LWShoot: public Printable {
             return (((this->id << 2) + this->color) << 4) + this->damage;
         }
         
-        void setColor(unsigned long color){ this->color = color; }
+        void setColor(LWColor color){ this->color = color; }
         void setId(unsigned char id){ this->id = id; }
         void setDamage(unsigned char damage){
             for (unsigned char i = 0; i < 16; i++){
@@ -33,6 +37,11 @@ class LWShoot: public Printable {
                     return;
                 }
             }
+        }
+        void setShoot(LWColor color, unsigned char damage, unsigned char id){
+            this->setColor(color);
+            this->setDamage(damage);
+            this->setId(id);
         }
 
         size_t printTo(Print& p) const {

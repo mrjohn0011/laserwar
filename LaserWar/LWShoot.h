@@ -10,6 +10,7 @@ class LWShoot: public Printable {
         unsigned char damage, id;
     public:
         bool load(unsigned long signal){
+            if (signal >= 0x1FFF) return false;
             this->damage = dmg_list[signal & 0b1111];
             this->color = (signal >> 4) & 0b11;
             this->id = (signal >> 6) & 0b1111111;

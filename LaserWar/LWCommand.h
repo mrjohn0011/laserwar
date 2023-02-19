@@ -14,7 +14,7 @@ public:
         this->setData(data);
     }
     bool load(unsigned long command){
-        if (command & 0xff != LW_CMD_END) return false;
+        if ((command & 0xff) != LW_CMD_END) return false;
         this->data = (command >> 8) & 0xff;
         this->group = (command >> 16) & 0xff;
         return true;
@@ -23,6 +23,10 @@ public:
     unsigned char getData(){ return this->data; }
     void setGroup(LwSetting group){ this->group = group; }
     void setData(unsigned char data){ this->data = data; }
+    void setCommand(LwSetting group, unsigned char data){
+        this->setGroup(group);
+        this->setData(data);
+    }
     unsigned long getCommand(){
         return ((((unsigned long)this->group << 8) + (unsigned long)this->data) << 8) + (unsigned long)LW_CMD_END;
     }

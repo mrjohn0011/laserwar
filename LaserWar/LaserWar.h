@@ -17,6 +17,7 @@
 #ifndef LaserWar_h
 #define LaserWar_h
 #include <Arduino.h>
+#include <LWCommand.h>
 
 class LaserWar {
 	private:
@@ -39,7 +40,7 @@ class LaserWar {
 			delayMicroseconds(MLT_SPACE_INTERVAL);
 		}
 
-		bool hasSignal(int result){
+		bool hasSignal(unsigned int result){
 			return result < this->calmValue;
 		}
 
@@ -91,11 +92,11 @@ class LaserWar {
 			this->calmValue = 995;
 		}
 
-		void send(unsigned long cmd){
+		void send(LWCommand cmd){
 			sendHeader();
-			sendByte(cmd >> 16);
-			sendByte((cmd & 0x00ffff) >> 8);
-			sendByte(cmd & 0x0000ff);
+			sendByte(cmd.getGroup());
+			sendByte(cmd.getData());
+			sendByte(LW_CMD_END);
 		}
 
 		unsigned long read(){

@@ -1,11 +1,21 @@
 #ifndef LWConstants_h
 #define LWConstants_h
 
-#define LW_COLOR_RED 0
-#define LW_COLOR_BLUE 1
-#define LW_COLOR_YELLOW 2
-#define LW_COLOR_GREEN 3
 #define LW_CMD_END 0xe8
+
+enum LwPreset {
+    Assault = 0,
+    Hostage = 1,
+    LastHero = 2,
+    Swat = 3
+};
+
+enum LWColor {
+    Red = 0,
+    Blue = 1,
+    Yellow = 2,
+    Green = 3
+};
 
 enum LwSetting {
     ChangeColor = 0xA9,

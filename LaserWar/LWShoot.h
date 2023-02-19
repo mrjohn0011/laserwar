@@ -9,10 +9,11 @@ class LWShoot: public Printable {
         unsigned long color;
         unsigned char damage, id;
     public:
-        void load(unsigned long signal){
+        bool load(unsigned long signal){
             this->damage = dmg_list[signal & 0b1111];
             this->color = (signal >> 4) & 0b11;
             this->id = (signal >> 6) & 0b1111111;
+            return true;
         }
 
         unsigned long getColor(){ return this->color; }

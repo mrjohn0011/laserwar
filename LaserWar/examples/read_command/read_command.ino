@@ -1,25 +1,25 @@
 #include <Arduino.h>
 #include <LaserWar.h>
+#include <LWShoot.h>
+#include <LWCommand.h>
 
-/*
-Используем фототранзистор 940нм и подключаем с общим эмиттером.
-Подключаем короткую ногу (коллектор) через резистор 1 КОм (или 10 КОм) к +5В
-Эту же кототкую ногу (коллектор) подключаем к аналоговому пину, например, A0, напрямую
-Длинную ногу (эмиттер) подключаем к GND
-*/
-#define RECEIVER_PIN A0
+LaserWar lw(A0); // Определяем ресивер на пине A0
+LWShoot shoot;  // Класс для парсинга выстрелов
+LWCommand cmd;  // Класс для парсинга команд
 
-LaserWar lw(RECEIVER_PIN);
-
-void setup() {
+void setup(){
   Serial.begin(9600);
-  Serial.println("Ready");
 }
 
 void loop() {
-  // Вернет 0, если команда не была считана или команду, если она успешно считалась
-  unsigned long cmd = lw.read();
-  if (cmd) {
-    Serial.println(cmd, HEX);
+  unsigned long s = lw.read(); // Получаем команду через ресивер
+  if (s){
+    Serial.println(s, HEX); // Выводим полученные данные
+    if (cmd.load(s)){
+      Serial.println(cmd); // Если полученные данные являются командой, выводим ее
+    } else {
+      shoot.load(s);
+      Serial.println(shoot); // Если полученные данные не являются командой, считаем, что это выстрел
+    }
   }
 }

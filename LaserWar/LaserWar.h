@@ -1,8 +1,8 @@
 /*
-  LaserWar.h
+  LaserWar.h - Library for flashing Morse code.
   Commands for sending, recieving and decoding LaserWar v9 commands
   Created by Eugeniy Maslyaev (mrjohn.ru), 
-  February 19, 2023.
+  September 9, 2019.
 */
 
 #define CARRIER_INTERVAL 4 // for DigiSpark

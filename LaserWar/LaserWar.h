@@ -1,10 +1,3 @@
-/*
-  LaserWar.h - Library for flashing Morse code.
-  Commands for sending, recieving and decoding LaserWar v9 commands
-  Created by Eugeniy Maslyaev (mrjohn.ru), 
-  September 9, 2019.
-*/
-
 #define CARRIER_INTERVAL 4 // for DigiSpark
 //#define CARRIER_INTERVAL 6 // for Arduino Pro Mini / Nano
 #define MLT_SPACE_INTERVAL 600

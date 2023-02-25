@@ -246,6 +246,7 @@ void measureVoltage() {
     Serial.println("Low voltage. The point is disabled");
      while (true){
       chargeIndicator.setHEX(0xFF0000);
+      beep(200, 1);
     }
   }
 }

@@ -4,7 +4,13 @@
 #include <Arduino.h>
 #include <Constants.h>
 
-class LWShoot: public Printable {
+class LWShoot
+
+#ifdef Printable_h
+: public Printable
+#endif
+
+{
     private:
         unsigned long color;
         unsigned char damage, id;
@@ -44,6 +50,7 @@ class LWShoot: public Printable {
             this->setId(id);
         }
 
+ #ifdef Printable_h
         size_t printTo(Print& p) const {
             size_t r = 0;
             r += p.print("Shoot. id=");
@@ -54,5 +61,6 @@ class LWShoot: public Printable {
             r += p.print(this->damage);
             return r;
         }
+#endif
 };
 #endif

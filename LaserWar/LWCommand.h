@@ -3,7 +3,13 @@
 #include <Arduino.h>
 #include <Constants.h>
 
-class LWCommand: public Printable {
+class LWCommand
+
+#ifdef Printable_h
+: public Printable 
+#endif
+
+{
 private:
     unsigned char group;
     unsigned char data;
@@ -31,6 +37,7 @@ public:
         return ((((unsigned long)this->group << 8) + (unsigned long)this->data) << 8) + (unsigned long)LW_CMD_END;
     }
 
+#ifdef Printable_h
     size_t printTo(Print& p) const {
         size_t r = 0;
 
@@ -68,6 +75,8 @@ public:
 
         return r;
     }
+#endif
+
 };
 
 #endif

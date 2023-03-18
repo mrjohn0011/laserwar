@@ -6,9 +6,9 @@
 #include <TimerMs.h>
 
 #define TONE_PIN 0
-#define BTN_PIN 1
+#define BTN_PIN 3
 #define TSOP_PIN 2
-#define IR_PIN 3
+#define IR_PIN 1
 #define BANGS_COUNT 3
 #define BEFORE_BANG_DELAY 4
 #define SETTINGS_WAIT_TIME 5000
@@ -77,6 +77,8 @@ void saveSettings(){
     Serial.print("Saved settings: ");
     Serial.print("Respawn Mode = ");
     Serial.print(respawnMode);
+    respawnTimer.setTime(respawnTimes[respawnMode]);
+    respawnTimer.start();
     Serial.print("; Used = ");
     Serial.println(used == '0' ? 0 : 1);
 }
@@ -105,7 +107,7 @@ void setup() {
   pinMode(TSOP_PIN, INPUT);
   pinMode(BTN_PIN, INPUT);
   pinMode(TONE_PIN, OUTPUT);
-  btn.setButtonLevel(HIGH);
+  btn.setButtonLevel(LOW);
   Serial.begin(9600);
   loadSettings();
 }

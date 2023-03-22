@@ -110,6 +110,7 @@ void setup() {
   btn.setButtonLevel(LOW);
   Serial.begin(9600);
   loadSettings();
+  beep(100, 1);
 }
 
 void nextMode(){

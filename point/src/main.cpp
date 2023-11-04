@@ -261,7 +261,7 @@ void loop() {
     settingsMode();
   }
 
-  measureVoltage();
+  // measureVoltage();
 
   if (ir.decode(&results)){
     Serial.print("Signal: "); Serial.println(results.value, HEX);

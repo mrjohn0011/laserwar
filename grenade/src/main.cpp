@@ -5,14 +5,14 @@
 #include <EncButton.h>
 #include <TimerMs.h>
 
-#define TONE_PIN 0
-#define BTN_PIN 3
-#define TSOP_PIN 2
-#define IR_PIN 1
+#define TONE_PIN 2 // Пьезик активный
+#define BTN_PIN 3  // Кнопка взрыва
+#define TSOP_PIN 4 // ИК приемник
+#define IR_PIN 5   // Светодиоды подключены параллельно через транзистор
 #define BANGS_COUNT 3
-#define BEFORE_BANG_DELAY 4
-#define SETTINGS_WAIT_TIME 5000
-#define MINUTES_BEFORE_SEARCH 30
+#define BEFORE_BANG_DELAY 4      // Секунд до варыва
+#define SETTINGS_WAIT_TIME 5000  // Время в милисекундах после включения, когда можно нажать кнопку для входа в меню настроек
+#define MINUTES_BEFORE_SEARCH 30 // Время бездействия в минутах до начала писка
 
 unsigned char used = '0';
 #define RESPAWN_MODES_COUNT 5
@@ -66,9 +66,10 @@ void bang()
     for (byte i = 0; i < BANGS_COUNT; i++)
     {
         lwSender.send(bangCmd);
+        digitalWrite(IR_PIN, LOW);
+        Serial.println("Bang!");
         delay(100);
     }
-    Serial.println("Bang!");
 
     used = '1';
     searchTimer.start();
